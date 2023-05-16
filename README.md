@@ -2,7 +2,7 @@
 ## 在Windows运行项目
 
 ##### 安装Mysql
-
+安装完数据库后需要设置`root`用户密码为`123456`
 1. 创建数据库zcgl
 
    ```
@@ -200,7 +200,7 @@ Quit the server with CTRL-BREAK.
 ## 在Linux运行项目
 
 ##### 安装Mysql
-
+安装完数据库后需要设置`root`用户密码为`123456`
 1. 创建数据库zcgl
 
    ```
@@ -308,3 +308,78 @@ Django version 2.2.3, using settings 'zcgl.settings'
 Starting development server at http://127.0.0.1:8000/
 Quit the server with CONTROL-C.
 ```
+## 在docker部署django
+
+##### 配置MySQL数据库
+
+**前提**：在物理机中已安装并配置完MySQL数据库用户`root`密码为`123456`
+
+在物理机修改用户表实现远程连接
+
+修改`/etc/mysql/mysql.conf.d/mysqld.cnf`，将文件中的`bind-address=127.0.0.1`改成如下配置
+
+```
+bind-address = 0.0.0.0
+```
+
+**注意**：在MySQL 8.0和更高版本中，bind-address指令可能不存在。在这种情况下，请将bind-address = 0.0.0.0添加到[mysqld]下。
+
+进入MySQL
+
+```
+mysql -u root -p
+```
+
+使用MySQL数据库，修改用户表
+
+```
+use mysql;
+update user set host = '%' where user = 'root';
+```
+
+重启MySQL服务
+
+```
+sudo systemctl restart mysql.service
+```
+
+关闭防火墙
+
+```
+sudo ufw disable
+```
+
+参考网址：
+
+https://www.myfreax.com/mysql-remote-access/#
+https://blog.csdn.net/xuezhangjun0121/article/details/103000452
+
+##### build image
+
+在Dockerfile相同目录下build image
+
+```
+docker build -t inteliotg/zcgl:v1 .
+```
+
+##### run container
+
+```
+docker run -it -d --name zcgl -p 9000:8000 inteliotg/zcgl:v1
+```
+
+##### 进入容器
+
+```
+docker exec -it zcgl bash
+```
+
+##### 在容器中手动运行django
+
+```
+python manage.py runserver 0.0.0.0:8000
+```
+
+在物理机打开浏览器访问`0.0.0.0:9000`或`127.0.0.1:9000`，在同网络的其他设备上访问方式为`IP:9000`
+
+**注意**：runserver后面的`0.0.0.0:8000`参数一定要加，并且端口一定要配置为`8000`，否则默认在容器中启动`http://127.0.0.1:8000/`，在容器外无法访问容器内的服务。
