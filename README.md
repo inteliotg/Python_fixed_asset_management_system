@@ -364,17 +364,26 @@ docker build -t inteliotg/zcgl:v1 .
 
 ##### run container
 
+启动容器时直接运行django
+```
+docker run -it -d --name zcgl -p 9000:8000 inteliotg/zcgl:v2-export_port bash -c "python manage.py runserver 0.0.0.0:8000"
+```
+
+在物理机打开浏览器访问`0.0.0.0:9000`或`127.0.0.1:9000`，在同网络的其他设备上访问方式为`IP:9000`
+
+或先启动容器，进入容器后手动运行django
+1. 启动容器
 ```
 docker run -it -d --name zcgl -p 9000:8000 inteliotg/zcgl:v1
 ```
 
-##### 进入容器
+2. 进入容器
 
 ```
 docker exec -it zcgl bash
 ```
 
-##### 在容器中手动运行django
+3. 在容器中手动运行django
 
 ```
 python manage.py runserver 0.0.0.0:8000
